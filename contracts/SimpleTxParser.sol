@@ -113,7 +113,53 @@ contract SimpleTxParser {
 
             parsedTX.inputs[i] = parsedInput;
         }
+    }
 
+    function convertRawToParsed(RawPlasmaTransaction memory rawTX)
+    public
+    pure
+    returns (ParsedPlasmaTransaction memory parsedTX) {
+        RawPlasmaTransaction memory partialTXforSignature;
+        RawTransactionInput memory input;
+        ParsedTransactionInput memory parsedInput;
+        bytes memory tmp;
+        bytes32 tmpHash;
+
+        partialTXforSignature.version = rawTX.version;
+        partialTXforSignature.txType = rawTX.txType;
+        partialTXforSignature.goodUntilBlock = rawTX.goodUntilBlock;
+
+        parsedTX.version = rawTX.version;
+        parsedTX.txType = rawTX.txType;
+        parsedTX.goodUntilBlock = rawTX.goodUntilBlock;
+
+        partialTXforSignature.outputs = new TransactionOutput[](rawTX.outputs.length);
+        parsedTX.outputs = new TransactionOutput[](rawTX.outputs.length);
+
+        for (uint256 i = 0; i < rawTX.outputs.length; i++) {
+            partialTXforSignature.outputs[i] = rawTX.outputs[i];
+            parsedTX.outputs[i] = rawTX.outputs[i];
+        }
+
+        partialTXforSignature.inputs = new RawTransactionInput[](1);
+        parsedTX.inputs = new ParsedTransactionInput[](rawTX.inputs.length);
+
+        for (uint256 i = 0; i < rawTX.inputs.length; i++) {
+            input.utxoId = rawTX.inputs[i].utxoId;
+            input.assetId = rawTX.inputs[i].assetId;
+            input.value = rawTX.inputs[i].value;
+
+            parsedInput.utxoId = rawTX.inputs[i].utxoId;
+            parsedInput.assetId = rawTX.inputs[i].assetId;
+            parsedInput.value = rawTX.inputs[i].value;
+
+            partialTXforSignature.inputs[0] = input;
+            tmp = abi.encode(partialTXforSignature);
+            tmpHash = keccak256(tmp);
+            parsedInput.signer = ecrecover(tmpHash, rawTX.inputs[i].signatureV, rawTX.inputs[i].signatureR, rawTX.inputs[i].signatureS);
+
+            parsedTX.inputs[i] = parsedInput;
+        }
     }
 }
 

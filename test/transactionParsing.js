@@ -181,6 +181,53 @@ contract('Simple TX parser', async (accounts) => {
         console.log("ABI parsing a transaction with signatures takes gas : " + gas);
     });
 
+    it('should parse full transaction without manual encoding', async () => {
+        // struct RawTransactionInput {
+        //     uint48 utxoId;
+        //     uint256 assetId;
+        //     uint256 value;
+        //     uint8 signatureV;
+        //     bytes32 signatureR;
+        //     bytes32 signatureS;
+        // }
+        // struct TransactionOutput {
+        //     address recipient;
+        //     uint256 assetId;
+        //     uint256 value;
+        // }
+        // struct RawPlasmaTransaction {
+        //     uint8 version;
+        //     uint8 txType;
+        //     uint32 goodUntilBlock;
+        //     RawTransactionInput[] inputs;
+        //     TransactionOutput[] outputs;
+        // }
+
+        const inputElements = [];
+        inputElements.push(ethUtil.bufferToHex(crypto.randomBytes(6)));
+        inputElements.push(ethUtil.bufferToHex(crypto.randomBytes(32)));
+        inputElements.push(ethUtil.bufferToHex(crypto.randomBytes(32)));
+        inputElements.push("0x1b");
+        inputElements.push(ethUtil.bufferToHex(crypto.randomBytes(32)));
+        inputElements.push(ethUtil.bufferToHex(crypto.randomBytes(32)));
+        
+        const outputElements = [];
+        outputElements.push(ethUtil.bufferToHex(crypto.randomBytes(20)));
+        outputElements.push(ethUtil.bufferToHex(crypto.randomBytes(32)));
+        outputElements.push(ethUtil.bufferToHex(crypto.randomBytes(32)));
+
+        const transactionElements = [];
+        transactionElements.push(ethUtil.bufferToHex(crypto.randomBytes(1)));
+        transactionElements.push(ethUtil.bufferToHex(crypto.randomBytes(1)));
+        transactionElements.push(ethUtil.bufferToHex(crypto.randomBytes(4)));
+        transactionElements.push([inputElements]);
+        transactionElements.push([outputElements]);
+
+        const decoded = await contract.convertRawToParsed(transactionElements);
+        console.log(decoded);
+        const gas = await contract.convertRawToParsed.estimateGas(transactionElements);
+        console.log("Converting transaction to parsed using implicit ABI takes gas : " + gas);
+    });
 
 
 })
